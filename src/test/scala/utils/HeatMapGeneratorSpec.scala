@@ -50,33 +50,31 @@ class HeatMapGeneratorSpec extends AnyFlatSpec with Matchers with GivenWhenThen 
     resJsArray should equal(expJsArray)
   }
 
-  "HeatMapGenerator.generateInitialQuadTree" should "take sequence of tweets and quad tree level as input and return generated QuadTreeGeo" in {
+  "HeatMapGenerator.generateInitialQuadTree" should "take sequence of tweets as input and return generated QuadTreeGeo" in {
     Given("sequence of tweets, quad tree level and expected QuadTreeGeo")
-    val level = 1
     val userNameSeq = Seq("user_name", "user_name2")
     val timeSeq = Seq("27/09/2021", "28/09/2021")
     val textSeq = Seq("some text", "some text2")
     val tweetSeq = Seq(
       Tweet(10L, timeSeq(0), User(20L, userNameSeq(0)), textSeq(0), Place("testId1", "poi", Seq(Coordinate(-100.0, 20.0)))),
       Tweet(11L, timeSeq(1), User(21L, userNameSeq(1)), textSeq(1), Place("testId2", "poi", Seq(Coordinate(115.0, 25.0)))))
-    val expQuadTreeGeo = QuadTreeGeo(
-      topLeftNode = Some(QuadTreeGeo(1, Coordinate(-90.0, 45.0), 90.0, 45.0, pointsInTile = 1)),
-      topRightNode = Some(QuadTreeGeo(1, Coordinate(90.0, 45.0), 90.0, 45.0, pointsInTile = 1)),
-      botLeftNode = Some(QuadTreeGeo(1, Coordinate(-90.0, -45.0), 90.0, 45.0)),
-      botRightNode = Some(QuadTreeGeo(1, Coordinate(90.0, -45.0), 90.0, 45.0)),
-      pointsInTile = 2)
+    val expQuadTreeGeo = tweetSeq.foldLeft(QuadTreeGeo())((acc, tweet) => acc.addTweet(tweet))
 
     When("generateInitialQuadTree function is called with given parameters")
-    val resQuadTreeGeo = HeatMapGenerator.generateInitialQuadTree(tweetSeq, level)
+    val resQuadTreeGeo = HeatMapGenerator.generateInitialQuadTree(tweetSeq)
 
     Then("result QuadTreeGeo should be the same as expected one")
-    resQuadTreeGeo should equal(expQuadTreeGeo)
+    resQuadTreeGeo.level should equal(expQuadTreeGeo.level)
+    resQuadTreeGeo.tweetsInTile should equal(expQuadTreeGeo.tweetsInTile)
+    resQuadTreeGeo.center should equal(expQuadTreeGeo.center)
+    resQuadTreeGeo.halfHeight should equal(expQuadTreeGeo.halfHeight)
+    resQuadTreeGeo.halfWidth should equal(expQuadTreeGeo.halfWidth)
   }
 
   "HeatMapGenerator.generateQuadTreeGeoJson" should "take quad tree and level of nodes for generation as input and return JsArray with content of these nodes" in {
     Given("quad tree, level of nodes and expected JsArray")
     val levelOfNodes = 0
-    val quadTreeGeo = QuadTreeGeo().generateChildrenTillLevel(levelOfNodes)
+    val quadTreeGeo = QuadTreeGeo()
     val expJsArray = Json.arr(
       Json.obj(
         "type" -> "Feature",
@@ -172,13 +170,6 @@ class HeatMapGeneratorSpec extends AnyFlatSpec with Matchers with GivenWhenThen 
         )
       )
     )
-//    {"type":"FeatureCollection","features":[
-    //    {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-180,90],[0,90],[0,0],[-180,0],[-180,90]]]},"properties":{"fill":"#803300","stroke-width":0}},
-    //    {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[0,90],[180,90],[180,0],[0,0],[0,90]]]},"properties":{"fill":"#803300","stroke-width":0}},
-    //    {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-180,0],[0,0],[0,-90],[-180,-90],[-180,0]]]},"properties":{"fill":"#a8ff99","stroke-width":0}},
-    //    {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[0,0],[180,0],[180,-90],[0,-90],[0,0]]]},"properties":{"fill":"#a8ff99","stroke-width":0}},
-    //    {"type":"Feature","geometry":{"type":"Point","coordinates":[-100,20]},"properties":{"user":"user_name","time":"27/09/2021","tweet":"some text"}},
-    //    {"type":"Feature","geometry":{"type":"Point","coordinates":[115,25]},"properties":{"user":"user_name2","time":"28/09/2021","tweet":"some text2"}}]}
     When("generateQuadTreeGeoJson function is called for given parameters")
     val resJsObject = HeatMapGenerator.generateHeatMap(tweetSeq, level)
 

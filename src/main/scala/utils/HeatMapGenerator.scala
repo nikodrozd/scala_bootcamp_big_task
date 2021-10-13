@@ -8,7 +8,7 @@ object HeatMapGenerator extends java.io.Serializable{
 
   def generateHeatMap(tweets: Seq[Tweet], qtMaxLevel: Int): JsObject = {
     val poiTweetsGeoJson: JsArray = generatePoiTweetsGeoJson(tweets)
-    val initQuadTreeGeo: QuadTreeGeo = generateInitialQuadTree(tweets, qtMaxLevel)
+    val initQuadTreeGeo: QuadTreeGeo = generateInitialQuadTree(tweets)
     val qtGeoJson: JsArray = generateQuadTreeGeoJson(initQuadTreeGeo, qtMaxLevel)
     val totalGeoJsonArray = aggregateGeoJsonArrays(qtGeoJson, poiTweetsGeoJson)
 
@@ -19,10 +19,10 @@ object HeatMapGenerator extends java.io.Serializable{
     .map(convertTweetToGeoJson)
     .aggregate(Json.arr())(aggregateGeoJsonNodes, aggregateGeoJsonArrays)
 
-  private[utils] def generateInitialQuadTree(tweets: Seq[Tweet], qtMaxLevel: Int): QuadTreeGeo =
-    tweets.foldLeft(QuadTreeGeo().generateChildrenTillLevel(qtMaxLevel)){
-    (qt, tweet) => qt.analyzeAndCountCoordinate(tweet.place.placeCoordinates.head)
-  }
+  private[utils] def generateInitialQuadTree(tweets: Seq[Tweet]): QuadTreeGeo =
+    tweets.foldLeft(QuadTreeGeo()){
+      (qt, tweet) => qt.addTweet(tweet)
+    }
 
   private[utils] def generateQuadTreeGeoJson(quadTreeGeo: QuadTreeGeo, qtMaxLevel: Int): JsArray = {
     val max = quadTreeGeo.getMaxNumberOfPointsOnLevel(qtMaxLevel)
@@ -32,7 +32,7 @@ object HeatMapGenerator extends java.io.Serializable{
       val s = 100
       val lBase = 80
       val lDelta = 70
-      val l = lBase - qt.pointsInTile/max.toDouble * lDelta
+      val l = lBase - qt.getNumberOfPointInTile/max.toDouble * lDelta
       (hslToHex(h, s, l), qt)
     }
 

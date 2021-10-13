@@ -1,28 +1,16 @@
-import credentials.MongoDBCredentials
-import io.db.MongoDriver
+import com.mongodb.spark._
+import com.typesafe.config.ConfigFactory
 import io.file.FileWriter
-import utils.HeatMapGenerator
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
+import model.Tweet
+import play.api.libs.json.JsObject
+import utils.Spark.sparkSession.implicits._
+import utils.{HeatMapGenerator, Spark}
 
 object HeatMapMain extends App {
-  val outputFilePath = "src/main/resources/tweets.geojson"
-  val qtMaxLevel = 3
+  val outputFilePath: String = ConfigFactory.load().getString("common.outputFilePath")
+  val qtMaxLevel: Int = ConfigFactory.load().getInt("common.quadTreeMaxLevel")
 
-  val mongoDriver: MongoDriver = new MongoDriver(MongoDBCredentials.mongoURLWithAuthData,
-    MongoDBCredentials.dbName,
-    MongoDBCredentials.collectionName)
-
-  val tweetsFuture = mongoDriver.loadAllTweets()
-
-  tweetsFuture.onComplete{
-    case Success(tweets) =>
-      mongoDriver.closeConnection
-      val finalGeoJson = HeatMapGenerator.generateHeatMap(tweets, qtMaxLevel)
-      FileWriter.saveData(outputFilePath, finalGeoJson)
-    case Failure(exception) =>
-      mongoDriver.closeConnection
-      throw exception
-  }
+  val tweets: Seq[Tweet] = MongoSpark.load[Tweet](Spark.sparkSession).as[Tweet].rdd.collect()
+  val finalGeoJson: JsObject = HeatMapGenerator.generateHeatMap(tweets, qtMaxLevel)
+  FileWriter.saveData(outputFilePath, finalGeoJson)
 }

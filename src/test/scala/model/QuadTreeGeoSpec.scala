@@ -12,11 +12,7 @@ class QuadTreeGeoSpec extends AnyFlatSpec with Matchers with GivenWhenThen{
     val expCenter: Coordinate = Coordinate(0.0, 0.0)
     val expHalfWidth: Double = 180
     val expHalfHeight: Double = 90
-    val expTopLeftNode: Option[QuadTreeGeo] = None
-    val expTopRightNode: Option[QuadTreeGeo] = None
-    val expBotLeftNode: Option[QuadTreeGeo] = None
-    val expBotRightNode: Option[QuadTreeGeo] = None
-    val expPointsInTile: Int = 0
+    val expTweetsInTile: Seq[Tweet] = Seq.empty[Tweet]
 
     When("new QuadTreeGeo is created with no parameters")
     val resQuadTreeGeo = QuadTreeGeo()
@@ -27,103 +23,39 @@ class QuadTreeGeoSpec extends AnyFlatSpec with Matchers with GivenWhenThen{
     resQuadTreeGeo.center.y should equal(expCenter.y)
     resQuadTreeGeo.halfWidth should equal(expHalfWidth)
     resQuadTreeGeo.halfHeight should equal(expHalfHeight)
-    resQuadTreeGeo.topLeftNode should equal(expTopLeftNode)
-    resQuadTreeGeo.topRightNode should equal(expTopRightNode)
-    resQuadTreeGeo.botLeftNode should equal(expBotLeftNode)
-    resQuadTreeGeo.botRightNode should equal(expBotRightNode)
-    resQuadTreeGeo.pointsInTile should equal(expPointsInTile)
+    resQuadTreeGeo.tweetsInTile should equal(expTweetsInTile)
   }
 
-  "QuadTreeGeo.getModifiedCopy called w/o input parameters" should "create copy of QuadTreeGeo with same parameters" in {
-    Given("QuadTreeGeo object with default values")
+  "QuadTreeGeo.addTweet" should "add given tweet to seq of tweets in tile" in {
+    Given("QuadTreeGeo object with default values and tweet object")
     val initQuadTreeGeo = QuadTreeGeo()
+    val tweet: Tweet = Tweet(10L, "27/09/2021", User(20L, "user_name"), "some text", Place("testId1", "poi", Seq(Coordinate(-100.0, 20.0))))
 
-    When("new QuadTreeGeo object is created using getModifiedCopy function w/o input parameters")
-    val resQuadTreeGeo = initQuadTreeGeo.getModifiedCopy()
+    When("given tweet is added to quad tree using addTweet function")
+    val resQuadTreeGeo = initQuadTreeGeo.addTweet(tweet)
 
-    Then("new object should have same parameters except changed ones")
-    resQuadTreeGeo.level should equal(initQuadTreeGeo.level)
-    resQuadTreeGeo.center.x should equal(initQuadTreeGeo.center.x)
-    resQuadTreeGeo.center.y should equal(initQuadTreeGeo.center.y)
-    resQuadTreeGeo.halfWidth should equal(initQuadTreeGeo.halfWidth)
-    resQuadTreeGeo.halfHeight should equal(initQuadTreeGeo.halfHeight)
-    resQuadTreeGeo.topLeftNode should equal(initQuadTreeGeo.topLeftNode)
-    resQuadTreeGeo.topRightNode should equal(initQuadTreeGeo.topRightNode)
-    resQuadTreeGeo.botLeftNode should equal(initQuadTreeGeo.botLeftNode)
-    resQuadTreeGeo.botRightNode should equal(initQuadTreeGeo.botRightNode)
-    resQuadTreeGeo.pointsInTile should equal(resQuadTreeGeo.pointsInTile)
+    Then("seq of tweets in tile of result quad tree should contain given tweet")
+    resQuadTreeGeo.tweetsInTile should contain(tweet)
   }
 
-  "QuadTreeGeo.getModifiedCopy called with input parameters" should "create copy of QuadTreeGeo with new specified parameters" in {
-    Given("QuadTreeGeo object with default values and values for new object")
+  "QuadTreeGeo.getNumberOfPointInTile" should "return number of tweets in tile of quad tree" in {
+    Given("QuadTreeGeo object with default values and tweet object added to this QuadTreeGeo")
     val initQuadTreeGeo = QuadTreeGeo()
-    val newLevel = 2
-    val newCenter: Coordinate = Coordinate(1.0, 1.0)
-    val newHalfWidth: Double = 120
-    val newHalfHeight: Double = 60
-    val newTopLeftNode: Option[QuadTreeGeo] = Some(QuadTreeGeo(level = 3, pointsInTile = 1))
-    val newTopRightNode: Option[QuadTreeGeo] = Some(QuadTreeGeo(level = 3, pointsInTile = 2))
-    val newBotLeftNode: Option[QuadTreeGeo] = Some(QuadTreeGeo(level = 3, pointsInTile = 3))
-    val newBotRightNode: Option[QuadTreeGeo] = Some(QuadTreeGeo(level = 3, pointsInTile = 4))
-    val newPointsInTile: Int = 10
+    val tweet: Tweet = Tweet(10L, "27/09/2021", User(20L, "user_name"), "some text", Place("testId1", "poi", Seq(Coordinate(-100.0, 20.0))))
+    val resQuadTreeGeo = initQuadTreeGeo.addTweet(tweet)
+    val expSize = 1
 
-    When("new QuadTreeGeo object is created using getModifiedCopy function w/o input parameters")
-    val resQuadTreeGeo = initQuadTreeGeo.getModifiedCopy(newLevel, newCenter, newHalfWidth, newHalfHeight,
-      newTopLeftNode, newTopRightNode, newBotLeftNode, newBotRightNode, newPointsInTile)
+    When("getNumberOfPointInTile function is called for quad tree with tweet")
+    val result = resQuadTreeGeo.getNumberOfPointInTile
 
-    Then("new object should have same parameters except changed ones")
-    resQuadTreeGeo.level should equal(newLevel)
-    resQuadTreeGeo.center.x should equal(newCenter.x)
-    resQuadTreeGeo.center.y should equal(newCenter.y)
-    resQuadTreeGeo.halfWidth should equal(newHalfWidth)
-    resQuadTreeGeo.halfHeight should equal(newHalfHeight)
-    resQuadTreeGeo.topLeftNode should equal(newTopLeftNode)
-    resQuadTreeGeo.topRightNode should equal(newTopRightNode)
-    resQuadTreeGeo.botLeftNode should equal(newBotLeftNode)
-    resQuadTreeGeo.botRightNode should equal(newBotRightNode)
-    resQuadTreeGeo.pointsInTile should equal(newPointsInTile)
-  }
-
-  "QuadTreeGeo.generateChildrenTillLevel" should "create child QuadTreeGeo nodes of initial QuadTreeGeo object till specified level with proper parameters" in {
-    Given("initial QuadTreeGeo object and level value")
-    val initQuadTreeGeo: QuadTreeGeo = QuadTreeGeo()
-    val level = 1
-    val newHalfWidth = initQuadTreeGeo.halfWidth / 2
-    val newHalfHeight = initQuadTreeGeo.halfHeight / 2
-    val expTopLeftNode = Some(QuadTreeGeo(level, Coordinate(initQuadTreeGeo.center.x - newHalfWidth, initQuadTreeGeo.center.y + newHalfHeight), newHalfWidth, newHalfHeight))
-    val expTopRightNode = Some(QuadTreeGeo(level, Coordinate(initQuadTreeGeo.center.x + newHalfWidth, initQuadTreeGeo.center.y + newHalfHeight), newHalfWidth, newHalfHeight))
-    val expBotLeftNode = Some(QuadTreeGeo(level, Coordinate(initQuadTreeGeo.center.x - newHalfWidth, initQuadTreeGeo.center.y - newHalfHeight), newHalfWidth, newHalfHeight))
-    val expBotRightNode = Some(QuadTreeGeo(level, Coordinate(initQuadTreeGeo.center.x + newHalfWidth, initQuadTreeGeo.center.y - newHalfHeight), newHalfWidth, newHalfHeight))
-
-    When("generateChildrenTillLevel function is called for QuadTreeGeo object with specified level")
-    val resQuadTreeGeo = initQuadTreeGeo.generateChildrenTillLevel(level)
-
-    Then("new QuadTreeGeo object should have generated children with proper parameters till specified level")
-    resQuadTreeGeo.topLeftNode should equal(expTopLeftNode)
-    resQuadTreeGeo.topRightNode should equal(expTopRightNode)
-    resQuadTreeGeo.botLeftNode should equal(expBotLeftNode)
-    resQuadTreeGeo.botRightNode should equal(expBotRightNode)
-  }
-
-  "QuadTreeGeo.analyzeAndCountCoordinate" should "compare provided Coordinate with QuadTreeGeo nodes coordinates and increase count of points in tile for matched one" in {
-    Given("QuadTreeGeo with children till level 1 and input Coordinate")
-    val quadTreeGeo = QuadTreeGeo().generateChildrenTillLevel(1)
-    val coordinate = Coordinate(-100.0, 80)
-
-    When("analyzeAndCountCoordinate function is called for input QuadTreeGeo with given Coordinate")
-    val resQuadTreeGeo = quadTreeGeo.analyzeAndCountCoordinate(coordinate)
-
-    Then("points in tile parameter of proper node should be increase by 1")
-    resQuadTreeGeo.topLeftNode.map(_.pointsInTile).getOrElse(-1) should equal(1)
-    resQuadTreeGeo.topRightNode.map(_.pointsInTile).getOrElse(-1) should equal(0)
-    resQuadTreeGeo.botLeftNode.map(_.pointsInTile).getOrElse(-1) should equal(0)
-    resQuadTreeGeo.botRightNode.map(_.pointsInTile).getOrElse(-1) should equal(0)
+    Then("seq of tweets in tile of result quad tree should contain given tweet")
+    result should equal(expSize)
   }
 
   "QuadTreeGeo.getNodesFromLevel" should "return sequence of QuadTreeNodes from specified level" in {
-    Given("QuadTreeGeo with children till some level and expected nodes list")
+    Given("QuadTreeGeo and expected nodes list")
     val level = 1
-    val quadTreeGeo = QuadTreeGeo().generateChildrenTillLevel(level)
+    val quadTreeGeo = QuadTreeGeo()
     val expRes = List(QuadTreeGeo(1,Coordinate(-90.0,45.0),90.0,45.0),
       QuadTreeGeo(1,Coordinate(90.0,45.0),90.0,45.0),
       QuadTreeGeo(1,Coordinate(-90.0,-45.0),90.0,45.0),
@@ -136,14 +68,19 @@ class QuadTreeGeoSpec extends AnyFlatSpec with Matchers with GivenWhenThen{
     res should equal(expRes)
   }
 
-  "QuadTreeGeo.getMaxNumberOfPointsOnLevel" should "return max number of nodes' points in tile parameter from specified level" in {
-    Given("QuadTreeGeo with children till some level, some Coordinates and expected max value")
+  "QuadTreeGeo.getMaxNumberOfPointsOnLevel" should "return max number of nodes' points in tile from specified level" in {
+    Given("QuadTreeGeo, some Coordinates and expected max value")
     val level = 1
     val expMaxPointsInTile = 3
-    val coordinateSeq = Seq(Coordinate(-100.0, 80), Coordinate(100.0, 80), Coordinate(-100.0, -80),
-      Coordinate(-120.0, 60), Coordinate(-5.0, 80), Coordinate(120.0, 60))
-    val quadTreeGeoWithPoints = coordinateSeq.foldLeft(QuadTreeGeo().generateChildrenTillLevel(level)){
-      (qt, coordinate) => qt.analyzeAndCountCoordinate(coordinate)
+    val tweetSeq = Seq(
+      Tweet(1L, "", User(11L, ""), "", Place("", "", Seq(Coordinate(-100.0, 80)))),
+      Tweet(1L, "", User(11L, ""), "", Place("", "", Seq(Coordinate(100.0, 80)))),
+      Tweet(1L, "", User(11L, ""), "", Place("", "", Seq(Coordinate(-100.0, -80)))),
+      Tweet(1L, "", User(11L, ""), "", Place("", "", Seq(Coordinate(-120.0, 60)))),
+      Tweet(1L, "", User(11L, ""), "", Place("", "", Seq(Coordinate(-5.0, 80)))),
+      Tweet(1L, "", User(11L, ""), "", Place("", "", Seq(Coordinate(120.0, 60)))))
+    val quadTreeGeoWithPoints = tweetSeq.foldLeft(QuadTreeGeo()){
+      (qt, tweet) => qt.addTweet(tweet)
     }
 
     When("getMaxNumberOfPointsOnLevel function is called for given QuadTreeGeo")

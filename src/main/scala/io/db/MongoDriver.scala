@@ -24,10 +24,6 @@ class MongoDriver(mongoURL: String, dbName: String, collectionName: String) {
     tweetsCollection.flatMap(_.insert.one(tweet))
   }
 
-  def loadAllTweets(): Future[Seq[Tweet]] = {
-    tweetsCollection.flatMap(_.find(BSONDocument.empty).cursor[Tweet]().collect[Seq]())
-  }
-
   def closeConnection: Future[Unit] = mongoDriver.close()
 
 }

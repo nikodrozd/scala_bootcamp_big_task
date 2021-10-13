@@ -22,13 +22,14 @@ class MongoDBCredentialsSpec extends AnyFlatSpec with Matchers with GivenWhenThe
   it should "have same values of host, db name, db user, db pass in appropriate variables and connection URL with auth" in {
     Given("connection URL with auth and host, db name, db user, db pass values")
     val host = MongoDBCredentials.host
+    val port = MongoDBCredentials.port
     val dbName = MongoDBCredentials.dbName
     val dbUser = MongoDBCredentials.dbUser
     val dbPass = MongoDBCredentials.dbPass
     val urlWithAuth = MongoDBCredentials.mongoURLWithAuthData
 
     When("another connection url with auth data is created based on given host, db name, db user, db pass values")
-    val anotherUrlWithAuth = s"mongodb://$dbUser:$dbPass@$host/$dbName?authSource=$dbName"
+    val anotherUrlWithAuth = s"mongodb://$dbUser:$dbPass@$host:$port/$dbName?authSource=$dbName"
 
     Then("it should be the same as connection url with auth from MongoDBCredentials")
     anotherUrlWithAuth should equal(urlWithAuth)

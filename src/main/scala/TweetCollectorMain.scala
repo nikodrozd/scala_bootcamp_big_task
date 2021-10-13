@@ -3,7 +3,6 @@ import model.Tweet
 import org.apache.flink.streaming.api.datastream.{AsyncDataStream, DataStreamSource}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.connectors.twitter.TwitterSource
-import org.apache.flink.util.Collector
 import utils.flink.{AsyncDatabaseResult, StringToTweetFlatMap, TweetStringFilter}
 
 import java.util.concurrent.TimeUnit
@@ -19,4 +18,3 @@ object TweetCollectorMain extends App {
   env.execute("Test")
 
 }
-
